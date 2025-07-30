@@ -612,7 +612,7 @@ const determineSessionType = (
   if (sessionIndex === 0) return 'new_material';
   if (sessionIndex === totalSessions - 1) return 'review';
   if (topic.name.toLowerCase().includes('practice')) return 'practice';
-  return 'study';
+  return 'review'; // Valid StudySessionType
 };
 
 const mapDifficultyToEnergy = (difficulty: number): 'low' | 'medium' | 'high' => {

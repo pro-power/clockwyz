@@ -863,8 +863,20 @@ export interface AcademicCalendar {
     location: EventLocation | Building, 
     requirements: string[]
   ): boolean => {
+    // Check if location has accessibility information
+    if (!location.accessibility) return false;
+    
+    // For EventLocation, accessibility is string[]
+    if ('isVirtual' in location) {
+      return requirements.every(req => 
+        location.accessibility.includes(req)
+      );
+    }
+    
+    // For Building, accessibility is AccessibilityFeature[]
+    const accessibilityTypes = location.accessibility.map(feature => feature.type);
     return requirements.every(req => 
-      location.accessibility.includes(req)
+      accessibilityTypes.includes(req as any)
     );
   };
   

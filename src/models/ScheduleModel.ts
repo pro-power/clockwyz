@@ -221,6 +221,12 @@ export interface SuggestionFeedback {
   wouldRecommend?: boolean;
 }
 
+// Date range interface for various operations
+export interface DateRange {
+  startDate: Date;
+  endDate: Date;
+}
+
 // Enhanced Schedule with Student-Specific Data
 export interface StudentSchedule extends ScheduleData {
   studentId: string;

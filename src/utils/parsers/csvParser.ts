@@ -139,6 +139,16 @@ export const UNIVERSITY_FORMATS: Record<string, UniversityFormat> = {
   }
 };
 
+// Helper function to parse CSV data with proper Promise handling
+const parseCSVData = (csvData: string, config: Papa.ParseConfig): Promise<Papa.ParseResult<Record<string, string>>> => {
+    return new Promise((resolve, reject) => {
+      Papa.parse<Record<string, string>>(csvData, {
+        ...config,
+        complete: (results) => resolve(results),
+        error: (error: Papa.ParseError) => reject(error)
+      });
+    });
+  };
 // Main CSV parsing function
 export const parseScheduleCSV = async (
   file: File | string,
@@ -163,18 +173,14 @@ export const parseScheduleCSV = async (
       defaultConfig.universityFormat = detectUniversityFormat(csvData);
     }
 
-    const parseResult = Papa.parse(csvData, {
+    const parseResult = await parseCSVData(csvData, {
       header: defaultConfig.hasHeader,
       delimiter: defaultConfig.delimiter,
       skipEmptyLines: defaultConfig.skipEmptyLines,
       dynamicTyping: defaultConfig.dynamicTyping,
       delimitersToGuess: [',', '\t', '|', ';'],
       transformHeader: (header: string) => header.trim(),
-      transform: (value: string) => value.trim(),
-      complete: () => {},
-      error: (error: any) => {
-        throw new Error(`CSV parsing failed: ${error.message}`);
-      }
+      transform: (value: string) => value.trim()
     });
 
     if (parseResult.errors.length > 0) {

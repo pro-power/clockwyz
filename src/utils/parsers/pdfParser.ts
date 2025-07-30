@@ -1,4 +1,11 @@
-// src/utils/parsers/pdfParser.ts
+// Export utility functions
+export {
+  hasScheduleContent,
+  convertTo24Hour,
+  parseDaysFromPDF,
+  extractTableData,
+  parsePatternBasedCourses
+}; 
 
 import { Course } from '../../models/CourseModel';
 import { ImportResult, ImportError, ImportWarning } from '../../models/AcademicModel';
@@ -93,12 +100,12 @@ export const SCHEDULE_PATTERNS = {
   location: /(?:Room|Rm|Building|Bldg):\s*([A-Za-z0-9\s-]{2,20})/gi,
   credits: /(\d(?:\.\d)?)\s*(?:credits?|units?|hrs?)/gi,
   crn: /(?:CRN|Course\s*Registration\s*Number):\s*(\d{4,6})/gi,
-  section: /(?:Section|Sec):\s*([A-Za-z0-9]{1,5})/gi
+  section: /(?:Section|Sec):\s*([A-Za-z0-9]{1,5})/gi,
+  headerRow: /(?:Course|Class|Subject|Code|Name|Title|Instructor|Time|Days|Location|Credits|CRN)/gi
 };
 
 // Table detection patterns
 export const TABLE_PATTERNS = {
-  headerRow: /(?:Course|Class|Subject|Code|Name|Title|Instructor|Time|Days|Location|Credits|CRN)/gi,
   tableRow: /^([A-Z]{2,4}\s*\d{3,4}[A-Z]?)\s+(.{10,60})\s+([A-Za-z\s,.-]{3,40})\s+([MWF|TR|MTWRF]{1,7})\s+(\d{1,2}:\d{2}(?:AM|PM))\s*[-–—]\s*(\d{1,2}:\d{2}(?:AM|PM))\s+([A-Za-z0-9\s-]{2,20})\s*(\d(?:\.\d)?)?/gm,
   columnSeparators: /\s{3,}|\t+|\|/g
 };
@@ -180,7 +187,7 @@ export const parseSchedulePDF = async (
     }
 
     // Parse the extracted text for course information
-    const parsedData = parseTextForCourses(extractedText, file.name);
+    const parsedData = await parseTextForCourses(extractedText, file.name);
     
     const processingTime = Date.now() - startTime;
     const averageConfidence = ocrResults.length > 0 ? 
@@ -252,12 +259,12 @@ const extractEmbeddedText = async (
   // Extract PDF metadata
   const metadata = await pdf.getMetadata();
   const info: PDFInfo = {
-    title: metadata.info?.Title,
-    author: metadata.info?.Author,
-    creator: metadata.info?.Creator,
-    producer: metadata.info?.Producer,
-    creationDate: metadata.info?.CreationDate ? new Date(metadata.info.CreationDate) : undefined,
-    modificationDate: metadata.info?.ModDate ? new Date(metadata.info.ModDate) : undefined
+    title: (metadata.info as any)?.Title,
+    author: (metadata.info as any)?.Author,
+    creator: (metadata.info as any)?.Creator,
+    producer: (metadata.info as any)?.Producer,
+    creationDate: (metadata.info as any)?.CreationDate ? new Date((metadata.info as any).CreationDate) : undefined,
+    modificationDate: (metadata.info as any)?.ModDate ? new Date((metadata.info as any).ModDate) : undefined
   };
 
   return {
@@ -310,7 +317,8 @@ const performOCR = async (
       // Render PDF page to canvas
       await page.render({
         canvasContext: context,
-        viewport: viewport
+        viewport: viewport,
+        canvas: canvas
       }).promise;
 
       // Convert canvas to image data for OCR
@@ -328,8 +336,10 @@ const performOCR = async (
       if (ocrResult.data.confidence >= config.confidenceThreshold) {
         combinedText += `\n--- PAGE ${pageNum} (OCR) ---\n${ocrResult.data.text}\n`;
         
-        // Collect OCR details
-        ocrResult.data.words.forEach((word: any) => {
+        // Collect OCR details - use type assertion since Tesseract types may be incomplete
+        const ocrData = ocrResult.data as any;
+        
+        ocrData.words?.forEach((word: any) => {
           if (word.confidence >= config.confidenceThreshold) {
             allWords.push({
               text: word.text,
@@ -339,31 +349,31 @@ const performOCR = async (
           }
         });
 
-        ocrResult.data.lines.forEach((line: any) => {
+        ocrData.lines?.forEach((line: any) => {
           if (line.confidence >= config.confidenceThreshold) {
             allLines.push({
               text: line.text,
               confidence: line.confidence,
-              words: line.words.filter((w: any) => w.confidence >= config.confidenceThreshold)
-                .map((w: any) => ({ text: w.text, confidence: w.confidence, bbox: w.bbox })),
+              words: line.words?.filter((w: any) => w.confidence >= config.confidenceThreshold)
+                .map((w: any) => ({ text: w.text, confidence: w.confidence, bbox: w.bbox })) || [],
               bbox: line.bbox
             });
           }
         });
 
-        ocrResult.data.paragraphs.forEach((paragraph: any) => {
+        ocrData.paragraphs?.forEach((paragraph: any) => {
           if (paragraph.confidence >= config.confidenceThreshold) {
             allParagraphs.push({
               text: paragraph.text,
               confidence: paragraph.confidence,
-              lines: paragraph.lines.filter((l: any) => l.confidence >= config.confidenceThreshold)
+              lines: paragraph.lines?.filter((l: any) => l.confidence >= config.confidenceThreshold)
                 .map((l: any) => ({
                   text: l.text,
                   confidence: l.confidence,
-                  words: l.words.filter((w: any) => w.confidence >= config.confidenceThreshold)
-                    .map((w: any) => ({ text: w.text, confidence: w.confidence, bbox: w.bbox })),
+                  words: l.words?.filter((w: any) => w.confidence >= config.confidenceThreshold)
+                    .map((w: any) => ({ text: w.text, confidence: w.confidence, bbox: w.bbox })) || [],
                   bbox: l.bbox
-                })),
+                })) || [],
               bbox: paragraph.bbox
             });
           }
@@ -389,11 +399,11 @@ const performOCR = async (
 };
 
 // Parse extracted text for course information
-const parseTextForCourses = (text: string, filename: string): {
+const parseTextForCourses = async (text: string, filename: string): Promise<{
   courses: Partial<Course>[];
   errors: ImportError[];
   warnings: ImportWarning[];
-} => {
+}> => {
   const courses: Partial<Course>[] = [];
   const errors: ImportError[] = [];
   const warnings: ImportWarning[] = [];
@@ -402,7 +412,7 @@ const parseTextForCourses = (text: string, filename: string): {
     // First, try to detect if this is a structured table format
     const tableData = extractTableData(text);
     if (tableData.length > 0) {
-      return parseTableData(tableData, filename);
+      return await parseTableData(tableData, filename);
     }
 
     // Otherwise, use pattern-based extraction
@@ -464,11 +474,11 @@ const extractTableData = (text: string): string[][] => {
 };
 
 // Parse table data into courses
-const parseTableData = (tableData: string[][], filename: string): {
+const parseTableData = async (tableData: string[][], filename: string): Promise<{
   courses: Partial<Course>[];
   errors: ImportError[];
   warnings: ImportWarning[];
-} => {
+}> => {
   if (tableData.length === 0) {
     return { courses: [], errors: [], warnings: [] };
   }
@@ -480,7 +490,7 @@ const parseTableData = (tableData: string[][], filename: string): {
 
   // Use CSV parser with detected format
   try {
-    return parseScheduleCSV(csvData, {
+    const result = await parseScheduleCSV(csvData, {
       hasHeader: true,
       universityFormat: {
         name: 'PDF Table Extract',
@@ -489,11 +499,13 @@ const parseTableData = (tableData: string[][], filename: string): {
         dateFormat: 'MM/DD/YYYY',
         dayFormat: 'abbreviated'
       }
-    }).then(result => ({
+    });
+    
+    return {
       courses: result.courses,
       errors: result.errors,
       warnings: result.warnings
-    }));
+    };
   } catch (error) {
     return {
       courses: [],
@@ -684,7 +696,9 @@ const extractCourseFromContext = (
       semester: 'Fall 2024',
       year: new Date().getFullYear(),
       prerequisites: [],
-      tags: [extractDepartmentFromCourseCode(courseCode).toLowerCase()]
+      tags: [extractDepartmentFromCourseCode(courseCode).toLowerCase()],
+      workload: 'moderate', // Added missing property
+      level: credits >= 5000 ? 'graduate' : 'undergraduate' // Fixed to use correct level values
     },
     status: 'enrolled',
     createdAt: new Date(),
@@ -761,11 +775,4 @@ const extractDepartmentFromCourseCode = (courseCode: string): string => {
   return match ? match[1] : 'UNKNOWN';
 };
 
-// Export utility functions
-export {
-  hasScheduleContent,
-  convertTo24Hour,
-  parseDaysFromPDF,
-  extractTableData,
-  parsePatternBasedCourses
-};
+//

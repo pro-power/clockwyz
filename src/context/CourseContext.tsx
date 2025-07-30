@@ -382,13 +382,10 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         dispatch({ type: 'SET_COURSES', payload: courses });
       }
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'fetch',
-          message: `Failed to load courses: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true
-        }
+      addError({
+        type: 'fetch',
+        message: `Failed to load courses: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true
       });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
@@ -400,13 +397,10 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.courses));
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'sync',
-          message: `Failed to save courses: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true
-        }
+      addError({
+        type: 'sync',
+        message: `Failed to save courses: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true
       });
     }
   };
@@ -424,14 +418,11 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       dispatch({ type: 'ADD_COURSE', payload: newCourse });
       return newCourse.id;
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'validation',
-          message: `Failed to add course: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true,
-          context: courseData
-        }
+      addError({
+        type: 'validation',
+        message: `Failed to add course: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true,
+        context: courseData
       });
       throw error;
     }
@@ -446,15 +437,12 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
       dispatch({ type: 'UPDATE_COURSE', payload: { id, updates } });
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'validation',
-          message: `Failed to update course: ${error instanceof Error ? error.message : String(error)}`,
-          courseId: id,
-          recoverable: true,
-          context: updates
-        }
+      addError({
+        type: 'validation',
+        message: `Failed to update course: ${error instanceof Error ? error.message : String(error)}`,
+        courseId: id,
+        recoverable: true,
+        context: updates
       });
       throw error;
     }
@@ -469,14 +457,11 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
       dispatch({ type: 'DELETE_COURSE', payload: id });
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'validation',
-          message: `Failed to delete course: ${error instanceof Error ? error.message : String(error)}`,
-          courseId: id,
-          recoverable: true
-        }
+      addError({
+        type: 'validation',
+        message: `Failed to delete course: ${error instanceof Error ? error.message : String(error)}`,
+        courseId: id,
+        recoverable: true
       });
       throw error;
     }
@@ -500,14 +485,11 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       
       return await addCourse(courseData);
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'validation',
-          message: `Failed to duplicate course: ${error instanceof Error ? error.message : String(error)}`,
-          courseId: id,
-          recoverable: true
-        }
+      addError({
+        type: 'validation',
+        message: `Failed to duplicate course: ${error instanceof Error ? error.message : String(error)}`,
+        courseId: id,
+        recoverable: true
       });
       throw error;
     }
@@ -530,13 +512,10 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const conflicts = detectCourseConflicts(state.enrolledCourses);
       dispatch({ type: 'SET_CONFLICTS', payload: conflicts });
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'conflict',
-          message: `Failed to analyze conflicts: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true
-        }
+      addError({
+        type: 'conflict',
+        message: `Failed to analyze conflicts: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true
       });
     }
   };
@@ -546,13 +525,10 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const workload = analyzeCourseWorkload(state.enrolledCourses);
       dispatch({ type: 'SET_WORKLOAD_ANALYSIS', payload: workload });
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'conflict',
-          message: `Failed to analyze workload: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true
-        }
+      addError({
+        type: 'conflict',
+        message: `Failed to analyze workload: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true
       });
     }
   };
@@ -566,13 +542,10 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       );
       dispatch({ type: 'SET_RECOMMENDATIONS', payload: recommendations });
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'conflict',
-          message: `Failed to generate recommendations: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true
-        }
+      addError({
+        type: 'conflict',
+        message: `Failed to generate recommendations: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true
       });
     }
   };
@@ -611,14 +584,11 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
       dispatch({ type: 'SET_ANALYTICS', payload: { courseId, analytics } });
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'fetch',
-          message: `Failed to refresh analytics: ${error instanceof Error ? error.message : String(error)}`,
-          courseId,
-          recoverable: true
-        }
+      addError({
+        type: 'fetch',
+        message: `Failed to refresh analytics: ${error instanceof Error ? error.message : String(error)}`,
+        courseId,
+        recoverable: true
       });
     } finally {
       dispatch({ type: 'SET_COURSE_LOADING', payload: { courseId, loading: false } });
@@ -673,14 +643,11 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       }
 
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'import',
-          message: `Failed to import courses: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true,
-          context: { courseCount: courses.length }
-        }
+      addError({
+        type: 'import',
+        message: `Failed to import courses: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true,
+        context: { courseCount: courses.length }
       });
       throw error;
     } finally {
@@ -700,13 +667,10 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
       return coursesToExport;
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'sync',
-          message: `Failed to export courses: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true
-        }
+      addError({
+        type: 'sync',
+        message: `Failed to export courses: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true
       });
       throw error;
     }
@@ -718,14 +682,11 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await updateCourse(id, courseUpdates);
       }
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'validation',
-          message: `Failed to bulk update courses: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true,
-          context: { updateCount: updates.length }
-        }
+      addError({
+        type: 'validation',
+        message: `Failed to bulk update courses: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true,
+        context: { updateCount: updates.length }
       });
       throw error;
     }
@@ -758,14 +719,11 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       await refreshAnalytics(courseId);
       
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'fetch',
-          message: `Failed to refresh course data: ${error instanceof Error ? error.message : String(error)}`,
-          courseId,
-          recoverable: true
-        }
+      addError({
+        type: 'fetch',
+        message: `Failed to refresh course data: ${error instanceof Error ? error.message : String(error)}`,
+        courseId,
+        recoverable: true
       });
       throw error;
     } finally {
@@ -883,7 +841,12 @@ export const CourseProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const addError = (error: Omit<CourseError, 'id' | 'timestamp'>) => {
-    dispatch({ type: 'ADD_ERROR', payload: error });
+    const errorWithIdAndTimestamp: CourseError = {
+      ...error,
+      id: Date.now().toString(),
+      timestamp: new Date()
+    };
+    dispatch({ type: 'ADD_ERROR', payload: errorWithIdAndTimestamp });
   };
 
   const clearErrors = () => {
@@ -970,6 +933,3 @@ export const useCourseAnalytics = (courseId: string) => {
   const { analytics } = useCourses();
   return analytics[courseId];
 };
-
-// Export types
-export type { CourseContextState, CourseAction, CourseError, CourseFilterOptions, CourseSortOptions };

@@ -34,12 +34,16 @@ export interface UserPreferences {
 }
 
 export interface AcademicPreferences {
+  // Student identification
+  studentId: string; // Added studentId property
+  
   // Class preferences
   preferredClassTimes: TimePreference[];
   avoidEarlyClasses: boolean;
   earlyClassThreshold: string; // "08:00"
   avoidLateClasses: boolean;
   lateClassThreshold: string; // "18:00"
+  
   
   // Study preferences
   studyTimePreference: 'morning' | 'afternoon' | 'evening' | 'night' | 'flexible';
@@ -506,6 +510,7 @@ export const DEFAULT_STUDENT_PREFERENCES: UserPreferences = {
   
   // Enhanced student preferences
   academic: {
+    studentId: 'student-' + Date.now(), // Added default studentId
     preferredClassTimes: [
       {
         type: 'study',
@@ -955,6 +960,10 @@ export const validateUserPreferences = (preferences: Partial<UserPreferences>): 
   
   // Academic preferences validation
   if (preferences.academic) {
+    if (!preferences.academic.studentId || preferences.academic.studentId.trim().length === 0) {
+      errors.push('Student ID is required');
+    }
+    
     if (preferences.academic.gpaGoal && (preferences.academic.gpaGoal < 0 || preferences.academic.gpaGoal > 4.0)) {
       errors.push('GPA goal must be between 0.0 and 4.0');
     }

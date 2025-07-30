@@ -880,9 +880,8 @@ export interface FileValidationResult {
     return recommendations;
   };
   
-  // Export validation functions
+  // Export validation functions - REMOVED DUPLICATE validateFile EXPORT
   export {
-    validateFile,
     validateBasicFileProperties,
     validateFileSecurity,
     validateFileStructure,

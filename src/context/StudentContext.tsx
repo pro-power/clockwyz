@@ -1,8 +1,8 @@
 // src/context/StudentContext.tsx
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { StudentProfile, StudentStats, StudentGoal, DEFAULT_STUDENT_PREFERENCES } from '../models/StudentModel';
-import { UserPreferences, validateUserPreferences, migratePreferences } from '../models/UserPreferencesModel';
+import { StudentProfile, StudentStats, StudentGoal } from '../models/StudentModel';
+import { UserPreferences, validateUserPreferences, migratePreferences, DEFAULT_STUDENT_PREFERENCES } from '../models/UserPreferencesModel';
 
 // Context State Interface
 export interface StudentContextState {
@@ -371,13 +371,10 @@ export const StudentProvider: React.FC<{ children: ReactNode }> = ({ children })
         localStorage.setItem(STORAGE_KEYS.STUDENT_STATS, JSON.stringify(state.stats));
       }
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'storage',
-          message: `Failed to save data: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true
-        }
+      addError({
+        type: 'storage',
+        message: `Failed to save data: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true
       });
     }
   };
@@ -395,14 +392,11 @@ export const StudentProvider: React.FC<{ children: ReactNode }> = ({ children })
       
       dispatch({ type: 'UPDATE_PROFILE', payload: updates });
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'validation',
-          message: `Failed to update profile: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true,
-          context: updates
-        }
+      addError({
+        type: 'validation',
+        message: `Failed to update profile: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true,
+        context: updates
       });
       throw error;
     }
@@ -420,14 +414,11 @@ export const StudentProvider: React.FC<{ children: ReactNode }> = ({ children })
       
       dispatch({ type: 'UPDATE_PREFERENCES', payload: updates });
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'validation',
-          message: `Failed to update preferences: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true,
-          context: updates
-        }
+      addError({
+        type: 'validation',
+        message: `Failed to update preferences: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true,
+        context: updates
       });
       throw error;
     }
@@ -442,13 +433,10 @@ export const StudentProvider: React.FC<{ children: ReactNode }> = ({ children })
       
       dispatch({ type: 'RESET_PROFILE' });
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'storage',
-          message: `Failed to reset profile: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true
-        }
+      addError({
+        type: 'storage',
+        message: `Failed to reset profile: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true
       });
       throw error;
     }
@@ -464,14 +452,11 @@ export const StudentProvider: React.FC<{ children: ReactNode }> = ({ children })
       
       dispatch({ type: 'ADD_GOAL', payload: newGoal });
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'validation',
-          message: `Failed to add goal: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true,
-          context: goalData
-        }
+      addError({
+        type: 'validation',
+        message: `Failed to add goal: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true,
+        context: goalData
       });
       throw error;
     }
@@ -486,14 +471,11 @@ export const StudentProvider: React.FC<{ children: ReactNode }> = ({ children })
       
       dispatch({ type: 'UPDATE_GOAL', payload: { id, updates } });
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'validation',
-          message: `Failed to update goal: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true,
-          context: { id, updates }
-        }
+      addError({
+        type: 'validation',
+        message: `Failed to update goal: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true,
+        context: { id, updates }
       });
       throw error;
     }
@@ -508,14 +490,11 @@ export const StudentProvider: React.FC<{ children: ReactNode }> = ({ children })
       
       dispatch({ type: 'DELETE_GOAL', payload: { id } });
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'validation',
-          message: `Failed to delete goal: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true,
-          context: { id }
-        }
+      addError({
+        type: 'validation',
+        message: `Failed to delete goal: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true,
+        context: { id }
       });
       throw error;
     }
@@ -555,13 +534,10 @@ export const StudentProvider: React.FC<{ children: ReactNode }> = ({ children })
       
       updateStats(stats);
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'network',
-          message: `Failed to refresh stats: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true
-        }
+      addError({
+        type: 'network',
+        message: `Failed to refresh stats: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true
       });
       throw error;
     }
@@ -598,13 +574,10 @@ export const StudentProvider: React.FC<{ children: ReactNode }> = ({ children })
       
       return JSON.stringify(exportData, null, 2);
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'storage',
-          message: `Failed to export data: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true
-        }
+      addError({
+        type: 'storage',
+        message: `Failed to export data: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true
       });
       throw error;
     }
@@ -644,21 +617,23 @@ export const StudentProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
       
     } catch (error) {
-      dispatch({
-        type: 'ADD_ERROR',
-        payload: {
-          type: 'storage',
-          message: `Failed to import data: ${error instanceof Error ? error.message : String(error)}`,
-          recoverable: true,
-          context: { dataLength: data.length }
-        }
+      addError({
+        type: 'storage',
+        message: `Failed to import data: ${error instanceof Error ? error.message : String(error)}`,
+        recoverable: true,
+        context: { dataLength: data.length }
       });
       throw error;
     }
   };
 
   const addError = (error: Omit<StudentError, 'id' | 'timestamp'>) => {
-    dispatch({ type: 'ADD_ERROR', payload: error });
+    const errorWithIdAndTimestamp: StudentError = {
+      ...error,
+      id: Date.now().toString(),
+      timestamp: new Date()
+    };
+    dispatch({ type: 'ADD_ERROR', payload: errorWithIdAndTimestamp });
   };
 
   const clearErrors = () => {
@@ -753,6 +728,3 @@ export const useStudentErrors = () => {
   const { errors, clearErrors } = useStudent();
   return { errors, clearErrors };
 };
-
-// Export types and utilities
-export type { StudentContextState, StudentAction, StudentError, StudentContextActions };
