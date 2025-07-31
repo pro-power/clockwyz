@@ -4,7 +4,6 @@
 
 import React, { forwardRef, ButtonHTMLAttributes, ReactNode } from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
-import { framerMotionPresets } from '../../../tokens/motion';
 
 import './Button.module.css';
 
@@ -150,10 +149,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       .join(' ');
 
     // Animation props
-    const animationProps = disableAnimation ? {} : {
-      ...framerMotionPresets.hoverScale,
-      ...framerMotionPresets.tapScale
-    };
+    const animationProps = disabled || disableAnimation ? {} : {
+        whileHover: { scale: 1.02 },
+        whileTap: { scale: 0.98 },
+        transition: {
+          duration: 0.15,
+          ease: [0.25, 0.46, 0.45, 0.94] // cubic-bezier equivalent
+        }
+      };
 
     // Handle click events
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -216,7 +219,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Render as button
     return (
-      <motion.button
+        <button
         ref={ref}
         type="button"
         className={baseClasses}
@@ -228,7 +231,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {renderContent()}
-      </motion.button>
+        </button>
     );
   }
 );

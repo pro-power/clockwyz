@@ -19,7 +19,7 @@ import {
 import { Button } from '../../design-system/components/atoms/Button/Button';
 import { useTheme } from '../../components/layout/ThemeProvider';
 import { useStudent } from '../../context/StudentContext';
-import './Header.module.css';
+import '../../styles/header.css';
 
 interface HeaderProps {
   onSidebarToggle: () => void;

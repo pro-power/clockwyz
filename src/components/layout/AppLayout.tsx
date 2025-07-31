@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { useTheme } from '../../components/layout/ThemeProvider';
-import './AppLayout.module.css';
+import '../../styles/layout.css';
 
 // Main content area props
 interface AppLayoutProps {

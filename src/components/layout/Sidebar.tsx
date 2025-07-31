@@ -22,7 +22,7 @@ import { Button } from '../../design-system/components/atoms/Button/Button';
 import { useTheme, ThemeToggle } from '../../components/layout/ThemeProvider';
 import { useScheduleContext } from '../../context/ScheduleContext';
 import { useStudent } from '../../context/StudentContext';
-import './Sidebar.module.css';
+import '../../styles/sidebar.css';
 
 interface SidebarProps {
   currentView: string;

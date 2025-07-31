@@ -1,0 +1,454 @@
+/* src/styles/scifi-theme.css */
+/* Futuristic sci-fi theme for Clockwyz */
+
+/* Dark theme color overrides */
+:root {
+    /* Sci-fi dark theme colors */
+    --color-bg-primary: #0f172a;
+    --color-bg-secondary: #1e293b;
+    --color-bg-tertiary: #334155;
+    --color-bg-elevated: rgba(30, 41, 59, 0.8);
+    --color-bg-overlay: rgba(0, 0, 0, 0.7);
+    
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #cbd5e1;
+    --color-text-tertiary: #64748b;
+    --color-text-inverse: #0f172a;
+    --color-text-disabled: #475569;
+    
+    --color-border-default: rgba(51, 65, 85, 0.5);
+    --color-border-subtle: rgba(30, 41, 59, 0.5);
+    --color-border-strong: #64748b;
+    --color-border-focus: #3b82f6;
+    
+    /* Sci-fi accent colors */
+    --color-primary-50: #eff6ff;
+    --color-primary-500: #3b82f6;
+    --color-primary-600: #2563eb;
+    --color-primary-900: #1e3a8a;
+    
+    --color-secondary-500: #06b6d4;
+    --color-secondary-600: #0891b2;
+    
+    --color-accent-purple: #8b5cf6;
+    --color-accent-green: #10b981;
+    --color-accent-orange: #f59e0b;
+    --color-accent-pink: #ec4899;
+    
+    /* Glow effects */
+    --glow-blue: 0 0 20px rgba(59, 130, 246, 0.3);
+    --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.3);
+    --glow-purple: 0 0 20px rgba(139, 92, 246, 0.3);
+    --glow-green: 0 0 20px rgba(16, 185, 129, 0.3);
+    
+    /* Enhanced shadows for depth */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-default: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+    --shadow-neon: 0 0 30px rgba(59, 130, 246, 0.4);
+  }
+  
+  /* Global body styling for sci-fi theme */
+  body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #312e81 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--color-text-primary);
+    overflow-x: hidden;
+  }
+  
+  /* Sci-fi utility classes */
+  .glow-blue {
+    box-shadow: var(--glow-blue);
+  }
+  
+  .glow-cyan {
+    box-shadow: var(--glow-cyan);
+  }
+  
+  .glow-purple {
+    box-shadow: var(--glow-purple);
+  }
+  
+  .glow-green {
+    box-shadow: var(--glow-green);
+  }
+  
+  /* Backdrop blur utilities */
+  .backdrop-blur-xl {
+    backdrop-filter: blur(24px);
+  }
+  
+  .backdrop-blur-lg {
+    backdrop-filter: blur(16px);
+  }
+  
+  .backdrop-blur-md {
+    backdrop-filter: blur(12px);
+  }
+  
+  /* Gradient text utilities */
+  .text-gradient-blue {
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .text-gradient-purple {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .text-gradient-green {
+    background: linear-gradient(135deg, #10b981, #84cc16);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Animated gradient backgrounds */
+  .bg-gradient-animated {
+    background: linear-gradient(-45deg, #3b82f6, #8b5cf6, #06b6d4, #10b981);
+    background-size: 400% 400%;
+    animation: gradientShift 8s ease infinite;
+  }
+  
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  /* Sci-fi button styles */
+  .btn-sci-fi {
+    position: relative;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: var(--color-text-primary);
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+  
+  .btn-sci-fi::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  .btn-sci-fi:hover::before {
+    left: 100%;
+  }
+  
+  .btn-sci-fi:hover {
+    border-color: rgba(59, 130, 246, 0.6);
+    box-shadow: var(--glow-blue);
+    transform: translateY(-2px);
+  }
+  
+  /* Sci-fi card styles */
+  .card-sci-fi {
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(51, 65, 85, 0.5);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .card-sci-fi::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.6), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .card-sci-fi:hover::before {
+    opacity: 1;
+  }
+  
+  .card-sci-fi:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl), var(--glow-blue);
+  }
+  
+  /* Holographic effects */
+  .hologram {
+    position: relative;
+    background: linear-gradient(
+      135deg,
+      rgba(59, 130, 246, 0.1) 0%,
+      rgba(139, 92, 246, 0.1) 25%,
+      rgba(6, 182, 212, 0.1) 50%,
+      rgba(16, 185, 129, 0.1) 75%,
+      rgba(59, 130, 246, 0.1) 100%
+    );
+    background-size: 400% 400%;
+    animation: hologramShift 4s ease-in-out infinite;
+  }
+  
+  @keyframes hologramShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  
+  .hologram::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(59, 130, 246, 0.03) 2px,
+      rgba(59, 130, 246, 0.03) 4px
+    );
+    pointer-events: none;
+  }
+  
+  /* Pulse animation */
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulseGlow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
+      transform: scale(1.02);
+    }
+  }
+  
+  /* Sci-fi loading animation */
+  .loading-sci-fi {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+  }
+  
+  .loading-sci-fi::before,
+  .loading-sci-fi::after {
+    content: '';
+    position: absolute;
+    border: 2px solid transparent;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  .loading-sci-fi::before {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .loading-sci-fi::after {
+    width: 40px;
+    height: 40px;
+    top: 10px;
+    left: 10px;
+    border-top-color: #06b6d4;
+    animation-direction: reverse;
+    animation-duration: 0.8s;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  /* Matrix-style grid overlay */
+  .matrix-grid {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .matrix-grid::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    opacity: 0.3;
+  }
+  
+  /* Scan line effect */
+  .scan-lines {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .scan-lines::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(59, 130, 246, 0.05) 2px,
+      rgba(59, 130, 246, 0.05) 4px
+    );
+    pointer-events: none;
+    animation: scanMove 3s linear infinite;
+  }
+  
+  @keyframes scanMove {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+  
+  /* Glitch effect */
+  .glitch {
+    position: relative;
+    color: var(--color-text-primary);
+  }
+  
+  .glitch::before,
+  .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .glitch::before {
+    animation: glitch-1 0.5s infinite;
+    color: #ff0000;
+    z-index: -1;
+  }
+  
+  .glitch::after {
+    animation: glitch-2 0.5s infinite;
+    color: #00ffff;
+    z-index: -2;
+  }
+  
+  @keyframes glitch-1 {
+    0%, 14%, 15%, 49%, 50%, 99%, 100% {
+      transform: translate(0);
+    }
+    15%, 49% {
+      transform: translate(-2px, 0);
+    }
+  }
+  
+  @keyframes glitch-2 {
+    0%, 20%, 21%, 62%, 63%, 99%, 100% {
+      transform: translate(0);
+    }
+    21%, 62% {
+      transform: translate(2px, 0);
+    }
+  }
+  
+  /* Energy bar animation */
+  .energy-bar {
+    position: relative;
+    width: 100%;
+    height: 4px;
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  
+  .energy-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    border-radius: 2px;
+    animation: energyFlow 2s ease-in-out infinite;
+  }
+  
+  @keyframes energyFlow {
+    0% { width: 0%; }
+    50% { width: 100%; }
+    100% { width: 0%; }
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .card-sci-fi {
+      backdrop-filter: blur(12px);
+    }
+    
+    .scan-lines::after {
+      display: none; /* Disable scan lines on mobile for performance */
+    }
+    
+    .matrix-grid::before {
+      background-size: 30px 30px;
+    }
+  }
+  
+  /* High contrast mode adjustments */
+  @media (prefers-contrast: high) {
+    :root {
+      --color-border-default: #64748b;
+      --color-text-secondary: #e2e8f0;
+    }
+    
+    .glow-blue,
+    .glow-cyan,
+    .glow-purple,
+    .glow-green {
+      box-shadow: none;
+    }
+  }
+  
+  /* Reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .bg-gradient-animated,
+    .hologram,
+    .pulse-glow,
+    .loading-sci-fi::before,
+    .loading-sci-fi::after,
+    .scan-lines::after,
+    .glitch::before,
+    .glitch::after,
+    .energy-bar::after {
+      animation: none;
+    }
+    
+    .btn-sci-fi:hover,
+    .card-sci-fi:hover {
+      transform: none;
+    }
+  }
