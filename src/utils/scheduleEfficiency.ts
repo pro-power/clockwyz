@@ -2,6 +2,24 @@
 import { UserPreferences } from '../models/UserPreferencesModel';
 import { ScheduleData, Activity } from '../models/ScheduleModel';
 
+// Define types for schedule slots
+interface ScheduleSlot {
+  time: string;
+  activities: Record<string, Activity>;
+}
+
+interface WorkBlock {
+  start: number;
+  end: number;
+}
+
+interface SlotEnergyLevel {
+  index: number;
+  energy: number;
+}
+
+type EnergyProfile = 'morning' | 'evening' | 'balanced';
+
 /**
  * Analyzes the user's preferences and optimizes their schedule
  * based on productivity patterns, energy levels, and time constraints
@@ -22,9 +40,18 @@ export const optimizeSchedule = (schedule: ScheduleData, preferences: UserPrefer
 /**
  * Groups similar activities together for more efficient time blocks
  */
-const applyTimeBlockOptimization = (slots: any[], preferences: UserPreferences) => {
-  // Clone slots to avoid mutation
-  const optimizedSlots = JSON.parse(JSON.stringify(slots));
+const applyTimeBlockOptimization = (slots: ScheduleSlot[], preferences: UserPreferences): ScheduleSlot[] => {
+  // Clone slots to avoid mutation - ensure slots is an array before cloning
+  if (!Array.isArray(slots)) {
+    return slots;
+  }
+  const optimizedSlots: ScheduleSlot[] = JSON.parse(JSON.stringify(slots));
+  
+  // Check if slots array is empty or doesn't have the expected structure
+  if (optimizedSlots.length === 0 || !optimizedSlots[0]?.activities) {
+    return optimizedSlots;
+  }
+  
   const days = Object.keys(optimizedSlots[0].activities);
   
   // Process each day separately
@@ -33,33 +60,35 @@ const applyTimeBlockOptimization = (slots: any[], preferences: UserPreferences) 
     if (!preferences.workDays.includes(day)) return;
     
     // Find current work blocks and consolidate them if they're fragmented
-    let workBlocks: { start: number, end: number }[] = [];
-    let currentBlock: { start: number, end: number } | null = null;
+    const workBlocks: WorkBlock[] = [];
+    let currentBlock: WorkBlock | null = null;
     
     // First pass: identify existing work blocks
-    optimizedSlots.forEach((slot, index) => {
+    optimizedSlots.forEach((slot: ScheduleSlot, index: number) => {
       const activity = slot.activities[day];
       
       if (activity?.category === 'Work') {
-        if (!currentBlock) {
+        if (currentBlock === null) {
           currentBlock = { start: index, end: index };
         } else {
           currentBlock.end = index;
         }
-      } else if (currentBlock) {
-        workBlocks.push({ ...currentBlock });
+      } else if (currentBlock !== null) {
+        const block = currentBlock as WorkBlock;
+        workBlocks.push({ start: block.start, end: block.end });
         currentBlock = null;
       }
     });
     
     // Add the last block if it exists
-    if (currentBlock) {
-      workBlocks.push({ ...currentBlock });
+    if (currentBlock !== null) {
+      const block = currentBlock as WorkBlock;
+      workBlocks.push({ start: block.start, end: block.end });
     }
     
     // If we have multiple small work blocks, try to consolidate them
     if (workBlocks.length > 1) {
-      const mainWorkBlock = workBlocks.reduce((longest, current) => {
+      const mainWorkBlock = workBlocks.reduce((longest: WorkBlock, current: WorkBlock) => {
         return (current.end - current.start) > (longest.end - longest.start) ? current : longest;
       }, workBlocks[0]);
       
@@ -68,17 +97,17 @@ const applyTimeBlockOptimization = (slots: any[], preferences: UserPreferences) 
         if (block === mainWorkBlock) return;
         
         // Find free slots near the main work block
-        const freeSlots = [];
+        const freeSlots: number[] = [];
         
         // Look for free slots before and after the main block
         for (let i = Math.max(0, mainWorkBlock.start - 3); i < mainWorkBlock.start; i++) {
-          if (optimizedSlots[i].activities[day].content === 'Free Time') {
+          if (optimizedSlots[i].activities[day]?.content === 'Free Time') {
             freeSlots.push(i);
           }
         }
         
         for (let i = mainWorkBlock.end + 1; i < Math.min(optimizedSlots.length, mainWorkBlock.end + 4); i++) {
-          if (optimizedSlots[i].activities[day].content === 'Free Time') {
+          if (optimizedSlots[i].activities[day]?.content === 'Free Time') {
             freeSlots.push(i);
           }
         }
@@ -107,8 +136,14 @@ const applyTimeBlockOptimization = (slots: any[], preferences: UserPreferences) 
 /**
  * Schedules high-focus tasks during peak energy hours based on user's profile
  */
-const applyEnergyAwareScheduling = (slots: any[], preferences: UserPreferences) => {
-  const optimizedSlots = JSON.parse(JSON.stringify(slots));
+const applyEnergyAwareScheduling = (slots: ScheduleSlot[], preferences: UserPreferences): ScheduleSlot[] => {
+  const optimizedSlots: ScheduleSlot[] = JSON.parse(JSON.stringify(slots));
+  
+  // Check if slots array is empty or doesn't have the expected structure
+  if (optimizedSlots.length === 0 || !optimizedSlots[0]?.activities) {
+    return optimizedSlots;
+  }
+  
   const days = Object.keys(optimizedSlots[0].activities);
   
   // Determine user's energy pattern based on wake/sleep times
@@ -119,7 +154,7 @@ const applyEnergyAwareScheduling = (slots: any[], preferences: UserPreferences) 
     if (!preferences.workDays.includes(day)) return;
     
     // Map slots to approximate energy levels
-    const slotEnergyLevels = optimizedSlots.map((slot, index) => {
+    const slotEnergyLevels: SlotEnergyLevel[] = optimizedSlots.map((slot: ScheduleSlot, index: number) => {
       const timeMatch = slot.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
       if (!timeMatch) return { index, energy: 0.5 }; // Default mid-level
       
@@ -137,16 +172,16 @@ const applyEnergyAwareScheduling = (slots: any[], preferences: UserPreferences) 
     });
     
     // Sort slots by energy level (highest first)
-    slotEnergyLevels.sort((a, b) => b.energy - a.energy);
+    slotEnergyLevels.sort((a: SlotEnergyLevel, b: SlotEnergyLevel) => b.energy - a.energy);
     
     // Find tasks that require high focus (Work, Study)
-    const highFocusTasks = [];
-    const lowFocusTasks = [];
+    const highFocusTasks: number[] = [];
+    const lowFocusTasks: number[] = [];
     
-    optimizedSlots.forEach((slot, index) => {
+    optimizedSlots.forEach((slot: ScheduleSlot, index: number) => {
       const activity = slot.activities[day];
       
-      if (['Work', 'Study'].includes(activity.category)) {
+      if (['Work', 'Study'].includes(activity?.category || '')) {
         if (activity.content.includes('Meeting') || 
             activity.content.includes('Break') || 
             activity.content.includes('Email')) {
@@ -166,7 +201,7 @@ const applyEnergyAwareScheduling = (slots: any[], preferences: UserPreferences) 
       // Check if high energy slot contains a low-focus or free time activity
       const highEnergyActivity = optimizedSlots[highEnergyIndex].activities[day];
       
-      if (highEnergyActivity.content === 'Free Time' || 
+      if (highEnergyActivity?.content === 'Free Time' || 
           lowFocusTasks.includes(highEnergyIndex)) {
         
         // Swap activities
@@ -189,8 +224,14 @@ const applyEnergyAwareScheduling = (slots: any[], preferences: UserPreferences) 
 /**
  * Ensures work-life balance by adding breaks and personal activities
  */
-const applyWorkLifeBalance = (slots: any[], preferences: UserPreferences) => {
-  const optimizedSlots = JSON.parse(JSON.stringify(slots));
+const applyWorkLifeBalance = (slots: ScheduleSlot[], preferences: UserPreferences): ScheduleSlot[] => {
+  const optimizedSlots: ScheduleSlot[] = JSON.parse(JSON.stringify(slots));
+  
+  // Check if slots array is empty or doesn't have the expected structure
+  if (optimizedSlots.length === 0 || !optimizedSlots[0]?.activities) {
+    return optimizedSlots;
+  }
+  
   const days = Object.keys(optimizedSlots[0].activities);
   
   days.forEach(day => {
@@ -200,10 +241,10 @@ const applyWorkLifeBalance = (slots: any[], preferences: UserPreferences) => {
     let workCount = 0;
     let workStartIndex = -1;
     
-    optimizedSlots.forEach((slot, index) => {
+    optimizedSlots.forEach((slot: ScheduleSlot, index: number) => {
       const activity = slot.activities[day];
       
-      if (activity.category === 'Work') {
+      if (activity?.category === 'Work') {
         if (workCount === 0) {
           workStartIndex = index;
         }
@@ -213,10 +254,12 @@ const applyWorkLifeBalance = (slots: any[], preferences: UserPreferences) => {
         if (workCount >= 3) {
           // Insert a break in the middle of the work session
           const breakIndex = workStartIndex + Math.floor(workCount / 2);
-          optimizedSlots[breakIndex].activities[day] = {
-            content: 'Short Break',
-            category: 'Personal'
-          };
+          if (optimizedSlots[breakIndex]) {
+            optimizedSlots[breakIndex].activities[day] = {
+              content: 'Short Break',
+              category: 'Personal'
+            };
+          }
         }
         
         workCount = 0;
@@ -227,15 +270,17 @@ const applyWorkLifeBalance = (slots: any[], preferences: UserPreferences) => {
     // Check if the day ends with a long work session
     if (workCount >= 3) {
       const breakIndex = workStartIndex + Math.floor(workCount / 2);
-      optimizedSlots[breakIndex].activities[day] = {
-        content: 'Short Break',
-        category: 'Personal'
-      };
+      if (optimizedSlots[breakIndex]) {
+        optimizedSlots[breakIndex].activities[day] = {
+          content: 'Short Break',
+          category: 'Personal'
+        };
+      }
     }
     
     // Ensure there's at least one exercise/wellness activity per day
-    const hasExercise = optimizedSlots.some(slot => 
-      slot.activities[day].category === 'Exercise'
+    const hasExercise = optimizedSlots.some((slot: ScheduleSlot) => 
+      slot.activities[day]?.category === 'Exercise'
     );
     
     if (!hasExercise) {
@@ -244,20 +289,20 @@ const applyWorkLifeBalance = (slots: any[], preferences: UserPreferences) => {
       const eveningSlots = optimizedSlots.slice(Math.floor(optimizedSlots.length * 2 / 3));
       
       // Try morning first, then evening
-      let exerciseSlot = morningSlots.findIndex(slot => 
-        slot.activities[day].content === 'Free Time'
+      let exerciseSlot = morningSlots.findIndex((slot: ScheduleSlot) => 
+        slot.activities[day]?.content === 'Free Time'
       );
       
       if (exerciseSlot === -1) {
-        const eveningFreeIndex = eveningSlots.findIndex(slot => 
-          slot.activities[day].content === 'Free Time'
+        const eveningFreeIndex = eveningSlots.findIndex((slot: ScheduleSlot) => 
+          slot.activities[day]?.content === 'Free Time'
         );
         if (eveningFreeIndex !== -1) {
           exerciseSlot = Math.floor(optimizedSlots.length * 2 / 3) + eveningFreeIndex;
         }
       }
       
-      if (exerciseSlot !== -1) {
+      if (exerciseSlot !== -1 && optimizedSlots[exerciseSlot]) {
         optimizedSlots[exerciseSlot].activities[day] = {
           content: 'Exercise',
           category: 'Exercise'
@@ -272,7 +317,7 @@ const applyWorkLifeBalance = (slots: any[], preferences: UserPreferences) => {
 /**
  * Determine user's energy profile based on sleep patterns
  */
-const determineEnergyProfile = (preferences: UserPreferences): 'morning' | 'evening' | 'balanced' => {
+const determineEnergyProfile = (preferences: UserPreferences): EnergyProfile => {
   // Extract wake time and bed time
   const wakeTimeMatch = preferences.startTime.match(/(\d+):(\d+)/);
   const bedTimeMatch = preferences.bedTime.match(/(\d+):(\d+)/);
@@ -310,7 +355,7 @@ const determineEnergyProfile = (preferences: UserPreferences): 'morning' | 'even
 /**
  * Get energy level for a specific hour based on energy profile
  */
-const getEnergyLevel = (hour: number, profile: 'morning' | 'evening' | 'balanced'): number => {
+const getEnergyLevel = (hour: number, profile: EnergyProfile): number => {
   // Energy levels from 0.0 to 1.0
   if (profile === 'morning') {
     // Morning people peak in the morning, decline throughout the day
@@ -343,6 +388,11 @@ export const suggestActivities = (schedule: ScheduleData, preferences: UserPrefe
   const suggestedSchedule = { ...schedule };
   const slots = [...suggestedSchedule.slots];
   
+  // Check if slots array is empty or doesn't have the expected structure
+  if (slots.length === 0 || !slots[0]?.activities) {
+    return suggestedSchedule;
+  }
+  
   // Get all days
   const days = Object.keys(slots[0].activities);
   
@@ -351,10 +401,10 @@ export const suggestActivities = (schedule: ScheduleData, preferences: UserPrefe
     const isWorkDay = preferences.workDays.includes(day);
     
     // Find all free time slots
-    slots.forEach((slot, index) => {
+    slots.forEach((slot: ScheduleSlot, index: number) => {
       const activity = slot.activities[day];
       
-      if (activity.content === 'Free Time') {
+      if (activity?.content === 'Free Time') {
         // Suggest an activity based on context
         const suggestion = suggestActivityForTimeSlot(slot.time, day, isWorkDay, slots, index);
         
@@ -376,7 +426,7 @@ const suggestActivityForTimeSlot = (
   time: string, 
   day: string, 
   isWorkDay: boolean,
-  slots: any[],
+  slots: ScheduleSlot[],
   currentIndex: number
 ): Activity | null => {
   // Parse the time
@@ -391,8 +441,8 @@ const suggestActivityForTimeSlot = (
   else if (!isPM && hour === 12) hour = 0;
   
   // Check surrounding activities (previous and next)
-  const prevActivity = currentIndex > 0 ? slots[currentIndex - 1].activities[day] : null;
-  const nextActivity = currentIndex < slots.length - 1 ? slots[currentIndex + 1].activities[day] : null;
+  const prevActivity = currentIndex > 0 ? slots[currentIndex - 1]?.activities[day] : null;
+  const nextActivity = currentIndex < slots.length - 1 ? slots[currentIndex + 1]?.activities[day] : null;
   
   // Early morning (before work)
   if (hour >= 5 && hour < 8) {

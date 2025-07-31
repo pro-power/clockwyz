@@ -180,60 +180,69 @@ export const generateSchedule = (preferences: UserPreferences): ScheduleData => 
       ];
     }
     
-    // Generate schedule
+    // Generate schedule with proper metadata
     const schedule: ScheduleData = {
       slots: orderedTimeSlots.map(time => {
         const activities: { [key: string]: { content: string, category: string } } = {};
         
         days.forEach(day => {
-          // Initialize with "Free Time"
-          let defaultContent = 'Free Time';
-          let defaultCategory = 'Personal';
+          const mealCheck = isMealTime(time);
           
-          // Check for sleep time
           if (isSleepTime(time, wakeTime, validBedTime)) {
-            defaultContent = 'Sleep';
-            defaultCategory = 'Sleep';
-          } 
-          // Check for wake-up time
-          else if (time === formatHourToAmPm(parseTimeToHours(wakeTime))) {
-            defaultContent = 'Wake Up';
-            defaultCategory = 'Routine';
+            activities[day] = {
+              content: 'Sleep',
+              category: 'Sleep'
+            };
+          } else if (isWorkHours(time, day, preferences.workDays, preferences.workStartTime, preferences.workEndTime)) {
+            activities[day] = {
+              content: 'Work',
+              category: 'Work'
+            };
+          } else if (mealCheck.isMeal) {
+            activities[day] = {
+              content: mealCheck.mealName,
+              category: 'Meals'
+            };
+          } else {
+            activities[day] = {
+              content: 'Free Time',
+              category: 'Personal'
+            };
           }
-          // Check for bed time
-          else if (time === formatHourToAmPm(parseTimeToHours(validBedTime))) {
-            defaultContent = 'Bedtime';
-            defaultCategory = 'Routine';
-          }
-          // Check for work hours (if work schedule is constant)
-          else if (preferences.workScheduleConstant && 
-                 isWorkHours(time, day, preferences.workDays, preferences.workStartTime, preferences.workEndTime)) {
-            defaultContent = 'Work';
-            defaultCategory = 'Work';
-          }
-          // Check for meal times
-          else {
-            const mealCheck = isMealTime(time);
-            if (mealCheck.isMeal) {
-              defaultContent = mealCheck.mealName;
-              defaultCategory = 'Meals';
-            }
-          }
-          
-          activities[day] = {
-            content: defaultContent,
-            category: defaultCategory
-          };
         });
         
         return {
           time,
           activities
         };
-      })
+      }),
+      metadata: {
+        studentId: preferences.academic?.studentId || 'default-student',
+        semester: 'Fall 2024',
+        academicYear: '2024-2025',
+        generatedAt: new Date(),
+        version: '1.0.0',
+        source: 'ai_generated',
+        preferences: preferences,
+        statistics: {
+          totalActivities: 0,
+          totalStudyHours: 0,
+          totalClassHours: 0,
+          totalWorkHours: 0,
+          totalFreeTime: 0,
+          averageDailyCommute: 0,
+          categoryDistribution: [],
+          weeklyWorkload: 0,
+          timeUtilization: 0,
+          optimalityScore: 0
+        },
+        conflicts: [],
+        suggestions: []
+      }
     };
     
     return schedule;
+    
   } catch (error) {
     console.error("Error generating schedule:", error);
     
@@ -242,10 +251,10 @@ export const generateSchedule = (preferences: UserPreferences): ScheduleData => 
     const fallbackTimes = ['8:00 AM', '12:00 PM', '4:00 PM', '8:00 PM'];
     
     return {
-      slots: fallbackTimes.map(time => {
+      slots: fallbackTimes.map((time: string) => {
         const activities: { [key: string]: { content: string, category: string } } = {};
         
-        fallbackDays.forEach(day => {
+        fallbackDays.forEach((day: string) => {
           activities[day] = {
             content: 'Free Time',
             category: 'Personal'
@@ -256,7 +265,30 @@ export const generateSchedule = (preferences: UserPreferences): ScheduleData => 
           time,
           activities
         };
-      })
+      }),
+      metadata: {
+        studentId: 'fallback-student',
+        semester: 'Fall 2024',
+        academicYear: '2024-2025',
+        generatedAt: new Date(),
+        version: '1.0.0',
+        source: 'manual',
+        preferences: preferences,
+        statistics: {
+          totalActivities: 0,
+          totalStudyHours: 0,
+          totalClassHours: 0,
+          totalWorkHours: 0,
+          totalFreeTime: 0,
+          averageDailyCommute: 0,
+          categoryDistribution: [],
+          weeklyWorkload: 0,
+          timeUtilization: 0,
+          optimalityScore: 0
+        },
+        conflicts: [],
+        suggestions: []
+      }
     };
   }
 };

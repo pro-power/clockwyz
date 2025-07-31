@@ -145,7 +145,7 @@ const parseCSVData = (csvData: string, config: Papa.ParseConfig): Promise<Papa.P
       Papa.parse<Record<string, string>>(csvData, {
         ...config,
         complete: (results) => resolve(results),
-        error: (error: Papa.ParseError) => reject(error)
+        error: (error: any) => reject(error)
       });
     });
   };
