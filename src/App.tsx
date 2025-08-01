@@ -7,7 +7,7 @@ import { AppLayout, LayoutUtils } from './components/layout/AppLayout';
 import OnboardingFlow from './components/onboarding/OnboardingFlow';
 import ProductivityDashboard from './components/dashboard/ProductivityDashboard';
 import CommandPalette from './components/ui/CommandPalette';
-import ScheduleGrid from './components/ScheduleGrid';
+import EnhancedScheduleGrid from './components/schedule/EnhancedScheduleGrid';
 import Questionnaire from './components/Questionnaire';
 import { UserPreferences, DEFAULT_STUDENT_PREFERENCES } from './models/UserPreferencesModel';
 import { generateSchedule } from './utils/scheduleGenerator';
@@ -126,13 +126,12 @@ const AppContent: React.FC = () => {
             onOpenCommandPalette={() => setAppState(prev => ({ ...prev, showCommandPalette: true }))}
           />
         );
-      case 'schedule':
-        return (
-          <LayoutUtils.ContentWrapper>
-            <LayoutUtils.PageHeader title="Schedule Matrix" subtitle="Your optimized time blocks" />
-            <ScheduleGrid />
-          </LayoutUtils.ContentWrapper>
-        );
+        case 'schedule':
+          return (
+            <LayoutUtils.ContentWrapper>
+              <EnhancedScheduleGrid />
+            </LayoutUtils.ContentWrapper>
+          );
       case 'assignments':
       case 'courses':
       case 'analytics':

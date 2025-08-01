@@ -1,8 +1,9 @@
 // src/components/layout/Sidebar.tsx
-// Navigation sidebar with modern design and student-focused features
+// Updated navigation sidebar with modern collapsing design
 // Integrates with existing student context and schedule data
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calendar, 
   BookOpen, 
@@ -16,18 +17,21 @@ import {
   Target,
   BarChart3,
   GraduationCap,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2
 } from 'lucide-react';
-import { Button } from '../../design-system/components/atoms/Button/Button';
-import { useTheme, ThemeToggle } from '../../components/layout/ThemeProvider';
+import { useTheme, ThemeToggle } from './ThemeProvider';
 import { useScheduleContext } from '../../context/ScheduleContext';
 import { useStudent } from '../../context/StudentContext';
-import '../../styles/sidebar.css';
 
 interface SidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
   onClose: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 // Navigation items configuration
@@ -51,7 +55,7 @@ const NAVIGATION_ITEMS = [
     label: 'Assignments',
     icon: BookOpen,
     description: 'Track assignments and projects',
-    badge: 'urgent' // Could be dynamic based on due dates
+    badge: 3 // Could be dynamic based on due dates
   },
   {
     id: 'courses',
@@ -102,15 +106,32 @@ const QUICK_ACTIONS = [
 export const Sidebar: React.FC<SidebarProps> = ({
   currentView,
   onViewChange,
-  onClose
+  onClose,
+  isCollapsed = false,
+  onToggleCollapse
 }) => {
   const { isDarkMode } = useTheme();
-  const { schedule } = useScheduleContext();
-  const { currentStudent, stats } = useStudent();
+  const { currentStudent } = useStudent();
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Handle navigation item click
   const handleNavClick = (itemId: string) => {
     onViewChange(itemId);
+    if (isMobile) {
+      onClose();
+    }
   };
 
   // Handle quick action click
@@ -137,200 +158,276 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   // Calculate urgent assignments count
-  const urgentCount = React.useMemo(() => {
-    // This would integrate with your existing assignment data
-    // For now, return a mock count
-    return 2;
-  }, []);
-
-  // Student profile section
-  const renderStudentProfile = () => (
-    <div className="sidebar-profile">
-      <div className="profile-avatar">
-        <User size={20} />
-      </div>
-      <div className="profile-info">
-        <h3 className="profile-name">
-          {currentStudent?.personalInfo?.name || 'Student'}
-        </h3>
-        <p className="profile-detail">
-          {currentStudent?.academic?.currentSemester || 'Fall 2024'}
-        </p>
-        {currentStudent?.personalInfo?.gpa && (
-          <p className="profile-gpa">
-            GPA: {currentStudent.personalInfo.gpa.toFixed(2)}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-
-  // Navigation items section
-  const renderNavigation = () => (
-    <nav className="sidebar-nav" role="navigation" aria-label="Main navigation">
-      <ul className="nav-list">
-        {NAVIGATION_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentView === item.id;
-          const badgeCount = item.id === 'assignments' ? urgentCount : null;
-          
-          return (
-            <li key={item.id} className="nav-item">
-              <button
-                className={`nav-link ${isActive ? 'nav-link--active' : ''}`}
-                onClick={() => handleNavClick(item.id)}
-                aria-current={isActive ? 'page' : undefined}
-                title={item.description}
-              >
-                <div className="nav-icon">
-                  <Icon size={20} />
-                </div>
-                <div className="nav-content">
-                  <span className="nav-label">{item.label}</span>
-                  <span className="nav-description">{item.description}</span>
-                </div>
-                {badgeCount && badgeCount > 0 && (
-                  <span className="nav-badge" aria-label={`${badgeCount} urgent items`}>
-                    {badgeCount}
-                  </span>
-                )}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
-
-  // Quick actions section
-  const renderQuickActions = () => (
-    <div className="sidebar-actions">
-      <h4 className="actions-title">Quick Actions</h4>
-      <div className="actions-list">
-        {QUICK_ACTIONS.map((action) => {
-          const Icon = action.icon;
-          const badgeCount = action.id === 'notifications' ? action.badge : null;
-          
-          return (
-            <button
-              key={action.id}
-              className="action-button"
-              onClick={() => handleQuickAction(action.action, action.id)}
-              title={action.label}
-            >
-              <div className="action-icon">
-                <Icon size={18} />
-                {badgeCount && badgeCount > 0 && (
-                  <span className="action-badge" aria-label={`${badgeCount} notifications`}>
-                    {badgeCount}
-                  </span>
-                )}
-              </div>
-              <span className="action-label">{action.label}</span>
-              {action.shortcut && (
-                <span className="action-shortcut">{action.shortcut}</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  // Weekly summary section
-  const renderWeeklySummary = () => (
-    <div className="sidebar-summary">
-      <h4 className="summary-title">This Week</h4>
-      <div className="summary-stats">
-        <div className="stat-item">
-          <div className="stat-icon">
-            <Clock size={16} />
-          </div>
-          <div className="stat-content">
-            <span className="stat-value">32</span>
-            <span className="stat-label">Class Hours</span>
-          </div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-icon">
-            <BookOpen size={16} />
-          </div>
-          <div className="stat-content">
-            <span className="stat-value">{urgentCount}</span>
-            <span className="stat-label">Due Soon</span>
-          </div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-icon">
-            <Target size={16} />
-          </div>
-          <div className="stat-content">
-            <span className="stat-value">85%</span>
-            <span className="stat-label">On Track</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Settings section
-  const renderSettings = () => (
-    <div className="sidebar-settings">
-      <div className="settings-item">
-        <ThemeToggle size="sm" showLabel />
-      </div>
-      <button
-        className="settings-button"
-        onClick={() => handleNavClick('settings')}
-        title="Open settings"
-      >
-        <Settings size={18} />
-        <span>Settings</span>
-      </button>
-    </div>
-  );
+  const urgentCount = 3; // This would integrate with your existing assignment data
 
   return (
-    <div className="sidebar">
+    <motion.aside
+      className={`fixed left-0 top-0 h-full bg-slate-900/95 backdrop-blur-xl border-r border-slate-700/50 z-40 transition-all duration-300 ${
+        isCollapsed ? 'w-16' : 'w-64'
+      }`}
+      initial={false}
+      animate={{ width: isCollapsed ? 64 : 256 }}
+      style={{
+        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%)',
+        backdropFilter: 'blur(20px)',
+        borderRight: '1px solid rgba(71, 85, 105, 0.3)',
+        boxShadow: '4px 0 24px rgba(0, 0, 0, 0.12)'
+      }}
+    >
       {/* Close button for mobile */}
-      <button
-        className="sidebar-close"
-        onClick={onClose}
-        aria-label="Close sidebar"
-      >
-        <X size={20} />
-      </button>
+      {isMobile && (
+        <button
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-all z-50"
+          onClick={onClose}
+          aria-label="Close sidebar"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      )}
 
-      {/* Sidebar header with logo */}
-      <div className="sidebar-header">
-        <div className="sidebar-logo">
-          <div className="logo-icon">
-            <Calendar size={24} />
-          </div>
-          <span className="logo-text">StudyFlow</span>
+      {/* Sidebar Header */}
+      <div className="p-4 border-b border-slate-700/50">
+        <div className="flex items-center justify-between">
+          {!isCollapsed && (
+            <motion.div 
+              className="flex items-center gap-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border border-blue-500/30 shadow-lg">
+                <Calendar className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="font-bold text-white">StudyFlow</h1>
+                <p className="text-xs text-slate-400">Smart Schedule</p>
+              </div>
+            </motion.div>
+          )}
+          
+          {!isMobile && onToggleCollapse && (
+            <button
+              onClick={onToggleCollapse}
+              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-all"
+              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Sidebar content */}
-      <div className="sidebar-content">
-        {/* Student profile */}
-        {renderStudentProfile()}
-
-        {/* Main navigation */}
-        {renderNavigation()}
-
-        {/* Quick actions */}
-        {renderQuickActions()}
-
-        {/* Weekly summary */}
-        {renderWeeklySummary()}
+      {/* Student Profile */}
+      <div className="p-4 border-b border-slate-700/50">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+            <User className="w-4 h-4 text-white" />
+          </div>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="font-medium text-white">
+                {currentStudent?.personalInfo?.name || 'Alex Chen'}
+              </div>
+              <div className="text-xs text-slate-400">Computer Science</div>
+              <div className="text-xs text-slate-400">
+                GPA: {currentStudent?.personalInfo?.gpa?.toFixed(2) || '3.7'}
+              </div>
+            </motion.div>
+          )}
+        </div>
       </div>
 
-      {/* Sidebar footer */}
-      <div className="sidebar-footer">
-        {renderSettings()}
+      {/* Navigation */}
+      <nav className="p-4 flex-1 overflow-y-auto">
+        <div className={`space-y-${isCollapsed ? '4' : '2'}`}>
+          {NAVIGATION_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
+            const badgeCount = item.id === 'assignments' ? urgentCount : item.badge;
+            
+            return (
+              <motion.div 
+                key={item.id} 
+                whileHover={{ scale: 1.02 }} 
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.1 }}
+              >
+                <button
+                  onClick={() => handleNavClick(item.id)}
+                  className={`w-full flex items-center gap-3 rounded-lg transition-all group ${
+                    isActive 
+                      ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-400 border border-blue-500/30 shadow-lg' 
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  } ${isCollapsed ? 'justify-center p-3' : 'p-3'}`}
+                  title={isCollapsed ? item.label : undefined}
+                >
+                  <div className={`flex-shrink-0 ${isActive ? 'text-blue-400' : ''}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  
+                  {!isCollapsed && (
+                    <div className="flex-1 text-left min-w-0">
+                      <div className="font-medium truncate">{item.label}</div>
+                      <div className="text-xs opacity-70 truncate">{item.description}</div>
+                    </div>
+                  )}
+                  
+                  {!isCollapsed && badgeCount && badgeCount > 0 && (
+                    <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30 font-medium flex-shrink-0">
+                      {badgeCount}
+                    </span>
+                  )}
+
+                  {/* Collapsed state badge indicator */}
+                  {isCollapsed && badgeCount && badgeCount > 0 && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-900"></div>
+                  )}
+                </button>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Quick Actions */}
+        {!isCollapsed && (
+          <motion.div 
+            className="mt-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-1">
+              Quick Actions
+            </h4>
+            <div className="space-y-2">
+              {QUICK_ACTIONS.map((action) => {
+                const Icon = action.icon;
+                const badgeCount = action.id === 'notifications' ? action.badge : null;
+                
+                return (
+                  <motion.div key={action.id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <button 
+                      onClick={() => handleQuickAction(action.action, action.id)}
+                      className="w-full flex items-center gap-3 p-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-all group"
+                    >
+                      <div className="relative">
+                        <Icon className="w-4 h-4" />
+                        {badgeCount && badgeCount > 0 && (
+                          <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium">{action.label}</span>
+                      {action.shortcut && (
+                        <span className="ml-auto text-xs bg-slate-700/50 px-2 py-1 rounded font-mono">
+                          {action.shortcut}
+                        </span>
+                      )}
+                    </button>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Weekly Summary */}
+        {!isCollapsed && (
+          <motion.div 
+            className="mt-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ delay: 0.1 }}
+          >
+            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-1">
+              This Week
+            </h4>
+            <div className="space-y-3">
+              <motion.div 
+                className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/30 hover:bg-slate-800/50 transition-all"
+                whileHover={{ scale: 1.02 }}
+              >
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <Clock className="w-4 h-4 text-blue-400" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-white">32h</div>
+                  <div className="text-xs text-slate-400">Class Hours</div>
+                </div>
+              </motion.div>
+              
+              <motion.div 
+                className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/30 hover:bg-slate-800/50 transition-all"
+                whileHover={{ scale: 1.02 }}
+              >
+                <div className="p-2 bg-amber-500/20 rounded-lg">
+                  <Target className="w-4 h-4 text-amber-400" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-white">{urgentCount}</div>
+                  <div className="text-xs text-slate-400">Due Soon</div>
+                </div>
+              </motion.div>
+              
+              <motion.div 
+                className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/30 hover:bg-slate-800/50 transition-all"
+                whileHover={{ scale: 1.02 }}
+              >
+                <div className="p-2 bg-green-500/20 rounded-lg">
+                  <CheckCircle2 className="w-4 h-4 text-green-400" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-white">87%</div>
+                  <div className="text-xs text-slate-400">On Track</div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </nav>
+
+      {/* Settings */}
+      <div className="p-4 border-t border-slate-700/50">
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <button 
+            onClick={() => handleNavClick('settings')}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
+              currentView === 'settings' 
+                ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-400 border border-blue-500/30 shadow-lg' 
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+            } ${isCollapsed ? 'justify-center' : ''}`}
+            title={isCollapsed ? 'Settings' : undefined}
+          >
+            <Settings className="w-5 h-5" />
+            {!isCollapsed && (
+              <motion.span 
+                className="font-medium"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                Settings
+              </motion.span>
+            )}
+          </button>
+        </motion.div>
+        
+        {!isCollapsed && (
+          <motion.div 
+            className="mt-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <ThemeToggle size="sm" showLabel />
+          </motion.div>
+        )}
       </div>
-    </div>
+    </motion.aside>
   );
 };
 
